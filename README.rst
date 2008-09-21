@@ -8,8 +8,11 @@ This is a cli script for fetching your *Supplierungen* (don't know the correct e
 Requirements
 ------------
 
-python >= 2.4
-BeautifulSoup
+* python >= 2.4
+* BeautifulSoup
+
+.. _python: http://www.python.org/
+.. _BeautifulSoup: http://www.crummy.com/software/BeautifulSoup/
 
 Usage
 -----
