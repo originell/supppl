@@ -20,9 +20,9 @@ Usage
 Usage: supppl.py -s YOURSCHOOLID -c YOURCLASS -u USERNAME -p PASSWORD
 
 Options:
---version             show program's version number and exit
--h, --help            show this help message and exit
--s SCHOOL, --schoolid=SCHOOL
--c CL, --class=CL
--u USR, --user=USR
--p PW, --password=PW
+  --version             show program's version number and exit
+  -h, --help            show this help message and exit
+  -s SCHOOL, --schoolid=SCHOOL  your school's ID
+  -c CL, --class=CL             your class
+  -u USR, --user=USR            your school's username
+  -p PW, --password=PW          your school's password
