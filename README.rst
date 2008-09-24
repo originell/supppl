@@ -1,8 +1,8 @@
-======================
-supplierplan.at reader
-======================
+==========================
+supplierplan.at reader lib
+==========================
 
-This is a cli script for fetching your *Supplierungen* (don't know the correct english term) from a website which many schools in Austria seem to use.
+This is a python library for fetching infos from supplierplan.at
 
 ------------
 Requirements
@@ -14,15 +14,12 @@ Requirements
 .. _python: http://www.python.org/
 .. _BeautifulSoup: http://www.crummy.com/software/BeautifulSoup/
 
-Usage
------
+Documentation
+=============
 
-Usage: supppl.py -s YOURSCHOOLID -c YOURCLASS -u USERNAME -p PASSWORD
+    from supppl import Supplierplan
 
-Options:
-  --version             show program's version number and exit
-  -h, --help            show this help message and exit
-  -s SCHOOL, --schoolid=SCHOOL  your school's ID
-  -c CL, --class=CL             your class
-  -u USR, --user=USR            your school's username
-  -p PW, --password=PW          your school's password
+    sp = Supplierplan(school=SCHOOLID, usr=USRNAME, pw=PASS, cl=CLASS)
+    if sp.check_supps():
+        plan = sp.proc_html()
+        print plan

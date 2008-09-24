@@ -1,36 +1,26 @@
-#!/usr/bin/env python
 # coding: utf-8
-
-""" Supplierplan.at reader """
 import sys
 import urllib
 import urllib2
-from optparse import OptionParser
+import datetime
 
 try:
     from BeautifulSoup import BeautifulSoup
 except ImportError:
-    print 'This script requires BeautifulSoup to run\nGet it at' \
+    print 'This library requires BeautifulSoup to work\nGet it at' \
           'http://www.crummy.com/software/BeautifulSoup/'
 
+class Supplierplan:
+    """
+    Supplierplan.at process library
+    """
 
-VERSION = '%prog 1.0'
-USAGE = 'Usage: %prog -s YOURSCHOOLID -c YOURCLASS -u USERNAME -p PASSWORD'
-
-parser = OptionParser(usage=USAGE, version=VERSION)
-parser.add_option('-s', '--schoolid', dest='school')
-parser.add_option('-c', '--class', dest='cl')
-parser.add_option('-u', '--user', dest='usr')
-parser.add_option('-p', '--password', dest='pw')
-(options, args) = parser.parse_args()
-
-class SupplierplanReader:
-    """ Fetches, parses and outputs data from supplierplan.at"""
-
+    URL = 'http://admin.supplierplan.at/cgi-bin/supp.pl?' \
+          'find=%s&id=%s&user=%s&pwd=%s'
     BREAKSTRING = 'Keine Supplierungen gefunden...'
     LOGINFAIL = 'supplierplan login'
 
-    def __init__(self, school, cl, usr, pw):
+    def __init__(self, school=None, cl=None, usr=None, pw=None):
         self.school = school
         self.cl = cl
         self.usr = usr
@@ -40,89 +30,79 @@ class SupplierplanReader:
 
         # Get the HTML
         try:
-            url = 'http://admin.supplierplan.at/cgi-bin/supp.pl?' \
-                  'find=%s&id=%s&user=%s&pwd=%s' % (cl, school, usr, pw)
+            url = self.URL % (cl, school, usr, pw)
             hp = urllib2.urlopen(url)
             self.html = hp.read()
-            if self.BREAKSTRING in self.html:
-                sys.exit(BREAKSTRING)
-            elif self.LOGINFAIL in self.html:
-                sys.exit('Login into Supplierplan.at failed')
+            # check for failed login
+            if self.LOGINFAIL in self.html:
+                sys.exit('Login failed')
         except urllib2.HTTPError:
             sys.exit("Couldn't retrieve URL")
         except urllib2.URLError:
             sys.exit('URL not found')
 
-    def proc_html(self):
-        # modify html output so we can search for fonts safely
-        self.html = self.html.replace(' <td align="right">&nbsp;</td>',
-                            '<td align="right"><font>&nbsp;</font></td>') \
-                    .replace('<td align="center">&nbsp;</td>',
-                             '<td align="center"><font>&nbsp;</font></td>')
-        # Soupify it and get the table
-        soup = BeautifulSoup(self.html).table
-        # isolate only the tds
-        table = soup('td', {'class': 'topline'})
-        # now fetch the font tags
-        font = soup.findAll('font')
-
-        # content of fonts into list
-        plan = [str(x.contents[0]) for x in font[9:]]
-
-        # structure the plan = {day: supplierungen,}
-        # and get the list positions/length of each day
-        self.struct = {}
-        pos_start = []
-        i = 0
-        for x in plan:
-            if '<b>' in x:
-                self.struct[x] = []
-                pos_start.append(i)
-            i += 1
-
-        positions = []
-        for x in pos_start:
-            positions.append(x)
-            positions.append(x+1)
-        positions = positions[1:]
-        positions.append(len(plan))
-
-        # positions consist of beginning and end
-        # zip them into tuples
-        # Note: * is for eating non-completes
-        positions = zip(*[positions[i::2] for i in xrange(2)])
-
-        i = 0
-        for x in pos_start:
-            self.struct[plan[x]] = plan[positions[i][0]:positions[i][1]]
-            # Readability instead of performance:
-            # each entry per day consists of 8 items:
-            # Class, Hour, Substitute, Subject, Room, Instead of (x2), Notes
-            # zip them into tuples! (again ;D)
-            # Result: {DAY: [(entry 1), (entry 2)],..}
-            self.struct[plan[x]] = zip(*[self.struct[plan[x]][o::8] \
-                                         for o in xrange(8)])
-            i += 1
-
-    def output(self):
-        for x, y in self.struct.iteritems():
-            print x.replace('<b>', '').replace('</b>', '')
-            for z in y:
-                for a in z:
-                    a = a.replace(self.cl.upper(), '')
-                    if 'nbsp' in a:
-                        a = a.replace('&nbsp;', '-')
-                    print a,
-                print
-
     def __repr__(self):
-        return '<SupplierplanReader>'
+        return '<Supplierplan>'
 
-if options.school and options.cl and options.usr and options.pw:
-    suppl = SupplierplanReader(options.school, options.cl, options.usr,
-                               options.pw)
-    suppl.proc_html()
-    suppl.output()
-else:
-    sys.exit('Please check your input! You either forgot the ' \
-             'school-id, username, password or your class')
+    def proc_html(self):
+        """
+        Processes the HTML from __init__
+
+        returns a dict in the following format:
+        {datetime-object: [(entry1), (entry2),], datetime-object2: ...}
+        """
+        # hacky'sh
+        self.html = self.html.replace(
+                            '<td align="right">&nbsp;</td>',
+                            '<td align="right"><font>&nbsp;</font></td>') \
+                   .replace('<td align="center">&nbsp;</td>',
+                            '<td align="center"><font>&nbsp;</font></td>')
+        self.html = self.html.split('<!-- Supplierungen Begin -->')[1] \
+                             .split('<!-- Supplierungen Ende -->')[0]
+        soup = BeautifulSoup(self.html).findAll('td', {'width': None,})
+
+        # soup returns lists, merge them into one and fill empty lists
+        rawplan = []
+        for x in soup:
+            # we only need the contents of every font tag
+            # NOTE: days are inside <b> tags so they will stay a soup instance
+            y = x.font.contents
+            if y == []:
+                y.append(u'&nbsp;')
+            rawplan.append(y[0])
+
+        # strip 'BEMERKUNG'
+        rawplan = rawplan[1:]
+
+        struct = {}
+        parent = ''
+        for a in rawplan:
+            # Since days are still soup instances, we can easily build
+            # a semantic dict
+            if isinstance(a, basestring):
+                struct[parent].append(a)
+            else:
+                # parents are date strings
+                # so parents will become datetime objects
+                datestring = a.contents[0]
+                day, month, year = datestring[3:].split('.')
+                dateobj = datetime.datetime(int(year), int(month), int(day))
+                struct[dateobj] = []
+                parent = dateobj
+
+        # every entry per day consists of 8 items
+        # this code groups them into tuples of 8
+        for b, c in struct.iteritems():
+            struct[b] = zip(*[c[i::8] for i in xrange(8)])
+        return struct
+
+    def check_supps(self):
+        """
+        Wrapper around proc_html
+
+        Checks if any *supplierungen* could be found
+        """
+        if self.BREAKSTRING in self.html:
+            return False
+        else:
+            return True
