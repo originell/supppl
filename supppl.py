@@ -71,8 +71,14 @@ class Supplierplan:
                 y.append(u'&nbsp;')
             rawplan.append(y[0])
 
+        # Black magic
         # strip 'BEMERKUNG'
         rawplan = rawplan[1:]
+        # delete classname/number
+        del rawplan[1]
+        # insert 2 '-' in front of the first hour
+        rawplan.insert(1, '-')
+        rawplan.insert(1, '-')
 
         struct = {}
         parent = ''
@@ -96,7 +102,7 @@ class Supplierplan:
         # every entry per day consists of 8 items
         # this code groups them into tuples of 8
         for b, c in struct.iteritems():
-            struct[b] = zip(*[c[i::8] for i in xrange(8)])
+            struct[b] = zip(*[c[i::9] for i in xrange(9)])
         return struct
 
     def check_supps(self):
