@@ -80,7 +80,10 @@ class Supplierplan:
             # Since days are still soup instances, we can easily build
             # a semantic dict
             if isinstance(a, basestring):
-                struct[parent].append(a)
+                if 'nbsp' in a or '-' in a:
+                    struct[parent].append(None)
+                else:
+                    struct[parent].append(a)
             else:
                 # parents are date strings
                 # so parents will become datetime objects
