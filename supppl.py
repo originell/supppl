@@ -1,4 +1,5 @@
 # coding: utf-8
+import re
 import sys
 import urllib
 import urllib2
@@ -71,14 +72,15 @@ class Supplierplan:
                 y.append(u'&nbsp;')
             rawplan.append(y[0])
 
-        # Black magic
         # strip 'BEMERKUNG'
         rawplan = rawplan[1:]
-        # delete classname/number
-        del rawplan[1]
-        # insert 2 '-' in front of the first hour
-        rawplan.insert(1, '-')
-        rawplan.insert(1, '-')
+        # delete class from list and create a new list
+        p = re.compile('^\d[a-zA-Z]+')
+        for i in xrange(len(rawplan)):
+            if p.match(str(rawplan[i])):
+                del rawplan[i]
+                rawplan.insert(i, '-')
+                rawplan.insert(i, '-')
 
         struct = {}
         parent = ''
