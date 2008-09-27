@@ -21,18 +21,22 @@ class Supplierplan:
     BREAKSTRING = 'Keine Supplierungen gefunden...'
     LOGINFAIL = 'supplierplan login'
 
-    def __init__(self, school=None, cl=None, usr=None, pw=None):
+    def __init__(self, school=None, cl=None, usr=None, pw=None, proxy=None):
         self.school = school
         self.cl = cl
         self.usr = usr
         self.pw = pw
         self.struct = {}
         self.html = ''
+        self.proxy = proxy
+        if proxy and type(proxy) != dict:
+            sys.exit('proxy must be a dictionary mapping scheme names to ' \
+                     'proxy URLs\ne.g.: {"http": "http://wtf.com:8080"}')
 
         # Get the HTML
         try:
             url = self.URL % (cl, school, usr, pw)
-            hp = urllib2.urlopen(url)
+            hp = urllib2.urlopen(url, proxy)
             self.html = hp.read()
             # check for failed login
             if self.LOGINFAIL in self.html:

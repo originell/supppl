@@ -24,3 +24,7 @@ Documentation
     if sp.check_supps():
         plan = sp.proc_html()
         print plan
+
+optionally you can also specify a proxy::
+
+    sp = Supplierplan(school=SCHOOLID, usr=USRNAME, pw=PASS, cl=CLASS, proxy={'http': 'http://your_proxy.com'})
