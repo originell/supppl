@@ -95,7 +95,10 @@ class Supplierplan:
                 if 'nbsp' in a or '-' in a:
                     struct[parent].append(None)
                 else:
-                    struct[parent].append(a)
+                    try:
+                        struct[parent].append(int(a))
+                    except ValueError:
+                        struct[parent].append(a)
             else:
                 # parents are date strings
                 # so parents will become datetime objects
