@@ -92,7 +92,7 @@ class Supplierplan:
             # Since days are still soup instances, we can easily build
             # a semantic dict
             if isinstance(a, basestring):
-                if 'nbsp' in a or '-' in a:
+                if 'nbsp' in a or '-' in a or '?' in a:
                     struct[parent].append(None)
                 else:
                     try:
