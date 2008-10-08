@@ -8,7 +8,7 @@ import datetime
 try:
     from BeautifulSoup import BeautifulSoup
 except ImportError:
-    print 'This library requires BeautifulSoup to work\nGet it at' \
+    print 'This library requires BeautifulSoup to work\nGet it at ' \
           'http://www.crummy.com/software/BeautifulSoup/'
 
 class Supplierplan:
