@@ -21,7 +21,8 @@ class Supplierplan:
     BREAKSTRING = 'Keine Supplierungen gefunden...'
     LOGINFAIL = 'supplierplan login'
 
-    def __init__(self, school=None, cl=None, usr=None, pw=None, proxy=None):
+    def __init__(self, school=None, cl=None, usr=None, pw=None, auth=False,
+                 proxy=None):
         self.school = school
         self.cl = cl
         self.usr = usr
@@ -29,9 +30,33 @@ class Supplierplan:
         self.struct = {}
         self.html = ''
         self.proxy = proxy
-        if proxy and type(proxy) != dict:
+        self.auth = auth
+
+        # check for proxies
+        proxy_type = isinstance(proxy, dict)
+        if not auth and proxy and not proxy_type:
             sys.exit('proxy must be a dictionary mapping scheme names to ' \
                      'proxy URLs\ne.g.: {"http": "http://wtf.com:8080"}')
+        if auth and proxy and not proxy_type or auth and not proxy:
+            sys.exit('proxy must be a dictionary containing a valid '\
+                'username, password, port and host\n' \
+                'e.g.: {"user": "username", "pass": "password", ' \
+                '"host":"proxy.name.com", "port": 1337}')
+        if auth and proxy and proxy_type:
+            try:
+                usr = proxy['user']
+                pw = proxy['pass']
+                host = proxy['host']
+                port = proxy['port']
+
+                # thx comp.lang.python
+                proxy_support = urllib2.ProxyHandler(
+                    {'http': 'http://%s:%s@%s:%d' % (usr, pw, host, port)})
+                opener = urllib2.build_opener(proxy_support,
+                                              urllib2.HTTPHandler)
+                urllib2.install_opener(opener)
+            except KeyError:
+                sys.exit('proxy not containing all necessary informations')
 
         # Get the HTML
         try:
