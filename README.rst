@@ -25,6 +25,12 @@ Documentation
         plan = sp.proc_html()
         print plan
 
-optionally you can also specify a proxy::
+optionally you can also specify a proxy:
+
+- without authentication support::
 
     sp = Supplierplan(school=SCHOOLID, usr=USRNAME, pw=PASS, cl=CLASS, proxy={'http': 'http://your_proxy.com'})
+
+- with auth support::
+
+    sp = Supplierplan(school=SCHOOLID, usr=USRNAME, pw=PASS, cl=CLASS, auth=True, proxy={'user': 'yourusername', 'pass': 'yourpassword', 'host': 'yourhost.com', 'port': 1337})
